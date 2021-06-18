@@ -13,9 +13,9 @@ jobs:
       - name: tar.gz
         run: tar -vzxf openshift-client-linux.tar.gz
       - name: Docker Login registry.redhat.io
-        run: echo ${{ secrets.REGISTRY_REDHAT_PASSWORD }} | docker login -u ${{ secrets.REGISTRY_REDHAT_USERNAME }} --password-stdin
+        run: echo ${{ secrets.REGISTRY_REDHAT_PASSWORD }} | docker login registry.redhat.io -u ${{ secrets.REGISTRY_REDHAT_USERNAME }} --password-stdin
       - name: Docker Login quay.io
-        run: echo ${{ secrets.REGISTRY_QUAY_PASSWORD }} | docker login -u danielmenezesbr --password-stdin
+        run: echo ${{ secrets.REGISTRY_QUAY_PASSWORD }} | docker login quay.io -u danielmenezesbr --password-stdin
       - name: Build Image
         run: |
           export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()))')
