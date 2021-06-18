@@ -8,5 +8,21 @@ jobs:
   my-job:
     runs-on: ubuntu-latest
     steps:
-      - name: my-step
-        run: echo "Hello World!"
+      - name: Download OC
+        run: curl -L -o openshift-client-linux.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.18/openshift-client-linux.tar.gz
+      - name: tar.gz
+        run: tar -vzxf openshift-client-linux.tar.gz
+      - name: Docker Login quay.io
+        run: echo ${{ secrets.REGISTRY_QUAY_PASSWORD }} | docker login -u danielmenezesbr --password-stdin
+      - name: Docker Login registry.redhat.io
+        run: echo ${{ secrets.REGISTRY_REDHAT_PASSWORD }} | docker login -u ${{ secrets.REGISTRY_REDHAT_USERNAME }} --password-stdin
+      - name: Build Image
+        run: |
+          export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()))')
+          echo $TAG_NAME
+          ./oc adm catalog build --appregistry-org redhat-operators \
+            --from=registry.redhat.io/openshift4/ose-operator-registry:v4.6 \
+            --to=quay.io/danielmenezesbr/repotest:$(TAG_NAME)-snapshot-OCPv4.6 \
+            --filter-by-os="linux/amd64" --insecure
+          #docker run -p 50051:50051 -it quay.io/danielmenezesbr/repotest:$(TAG_NAME)-snapshot-OCPv4.6 &
+          
