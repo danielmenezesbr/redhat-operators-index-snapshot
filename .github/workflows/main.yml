@@ -24,6 +24,10 @@ jobs:
             --from=registry.redhat.io/openshift4/ose-operator-registry:v4.6 \
             --to=quay.io/danielmenezesbr/repotest:$TAG_NAME-snapshot-OCPv4.6 \
             --filter-by-os="linux/amd64" --insecure
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+      - name: Test Image
+        run: |
+          export TAG_NAME=${{ env.TAG_NAME }}
           docker pull quay.io/danielmenezesbr/repotest:$TAG_NAME-snapshot-OCPv4.6
           docker start -p 50051:50051 -it quay.io/danielmenezesbr/repotest:$TAG_NAME-snapshot-OCPv4.6 --name catalog
           export IP=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' catalog)
