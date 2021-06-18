@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  schedule:
+    - cron: "0 12 * * *"
   push:
     branches: [ main ]
     
@@ -22,14 +24,14 @@ jobs:
           echo $TAG_NAME
           ./oc adm catalog build --appregistry-org redhat-operators \
             --from=registry.redhat.io/openshift4/ose-operator-registry:v4.6 \
-            --to=quay.io/danielmenezesbr/repotest:$TAG_NAME-snapshot-OCPv4.6 \
+            --to=quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6 \
             --filter-by-os="linux/amd64" --insecure
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
       - name: Test Image
         run: |
           export TAG_NAME=${{ env.TAG_NAME }}
-          docker pull quay.io/danielmenezesbr/repotest:$TAG_NAME-snapshot-OCPv4.6
-          docker run -p 50051:50051 quay.io/danielmenezesbr/repotest:$TAG_NAME-snapshot-OCPv4.6 &
+          docker pull quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6
+          docker run -p 50051:50051 quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6 &
           sleep 10
           export ID=$(docker ps | grep 'quay' | awk '{ print $1 }')
           echo "ID: $ID"
