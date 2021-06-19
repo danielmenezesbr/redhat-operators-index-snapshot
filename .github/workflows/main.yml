@@ -28,6 +28,8 @@ jobs:
             --to=quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6 \
             --filter-by-os="linux/amd64" --insecure 2>&1
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          pwd
+          ls -la
       - uses: actions/upload-artifact@v2
         with:
           name: catalog
@@ -44,6 +46,6 @@ jobs:
           export IP=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $ID)
           echo "CATALOG IP: $IP"
           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"servicemeshoperator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
-          docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"elasticsearch-operator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
+          docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"elasticsearch-operator","channelName":"4.6"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"jaeger-product","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"kiali-ossm","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
