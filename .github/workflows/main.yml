@@ -24,9 +24,9 @@ jobs:
           export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()))')
           echo $TAG_NAME
           nohup ./oc adm catalog build --appregistry-org redhat-operators \
-            --from=registry.redhat.io/openshift4/ose-operator-registry:v4.6 \
+            --from=registry.redhat.io/openshift4/ose-operator-registry:latest \
             --to=quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6 \
-            --filter-by-os="linux/amd64" --insecure 2>&1
+            --filter-by-os="linux/amd64" --insecure
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           pwd
           ls -la
