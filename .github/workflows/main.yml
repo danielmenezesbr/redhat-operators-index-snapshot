@@ -10,8 +10,10 @@ jobs:
   my-job:
     runs-on: ubuntu-latest
     steps:
-       - name: skopeo copy
-         run: |
+      - name: Docker Login registry.redhat.io
+        run: echo ${{ secrets.REGISTRY_REDHAT_PASSWORD }} | docker login registry.redhat.io -u ${{ secrets.REGISTRY_REDHAT_USERNAME }} --password-stdin
+      - name: skopeo copy
+        run: |
            set -exuo pipefail
            export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()))')
            echo $TAG_NAME
@@ -31,8 +33,6 @@ jobs:
 #        run: curl -L -o openshift-client-linux.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.18/openshift-client-linux.tar.gz
 #      - name: tar.gz
 #        run: tar -vzxf openshift-client-linux.tar.gz
-#      - name: Docker Login registry.redhat.io
-#        run: echo ${{ secrets.REGISTRY_REDHAT_PASSWORD }} | docker login registry.redhat.io -u ${{ secrets.REGISTRY_REDHAT_USERNAME }} --password-stdin
 #      - name: Docker Login quay.io
 #        run: echo ${{ secrets.REGISTRY_QUAY_PASSWORD }} | docker login quay.io -u danielmenezesbr --password-stdin
 #      - name: Build Image
