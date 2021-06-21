@@ -12,14 +12,16 @@ jobs:
     steps:
       - name: Docker Login registry.redhat.io
         run: echo ${{ secrets.REGISTRY_REDHAT_PASSWORD }} | docker login registry.redhat.io -u ${{ secrets.REGISTRY_REDHAT_USERNAME }} --password-stdin
+      - name: Docker Login quay.io
+        run: echo ${{ secrets.REGISTRY_QUAY_PASSWORD }} | docker login quay.io -u danielmenezesbr --password-stdin
       - name: skopeo copy
         run: |
            set -exuo pipefail
-           export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()))')
+           export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()) + "-snapshot-OCPv4.6")')
            echo $TAG_NAME
-           skopeo copy --src-creds ${{ secrets.REGISTRY_REDHAT_USERNAME }}:${{ secrets.REGISTRY_REDHAT_PASSWORD }} --dest-creds danielmenezesbr:${{ secrets.REGISTRY_QUAY_PASSWORD }} docker://registry.redhat.io/redhat/redhat-operator-index:v4.6 docker://quay.io/repository/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
-           docker pull quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME-snapshot-OCPv4.6
-           docker run -p 50051:50051 quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME-snapshot-OCPv4.6 &
+           skopeo copy --src-creds ${{ secrets.REGISTRY_REDHAT_USERNAME }}:${{ secrets.REGISTRY_REDHAT_PASSWORD }} --dest-creds danielmenezesbr:${{ secrets.REGISTRY_QUAY_PASSWORD }} docker://registry.redhat.io/redhat/redhat-operator-index:v4.6 docker://quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
+           docker pull quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
+           docker run -p 50051:50051 quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
            sleep 10
            export ID=$(docker ps | grep 'quay' | awk '{ print $1 }')
            echo "ID: $ID"
