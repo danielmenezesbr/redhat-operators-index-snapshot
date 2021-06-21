@@ -19,7 +19,12 @@ jobs:
            set -exuo pipefail
            export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()) + "-snapshot-OCPv4.6")')
            echo $TAG_NAME
-           skopeo copy --src-creds ${{ secrets.REGISTRY_REDHAT_USERNAME }}:${{ secrets.REGISTRY_REDHAT_PASSWORD }} --dest-creds danielmenezesbr:${{ secrets.REGISTRY_QUAY_PASSWORD }} docker://registry.redhat.io/redhat/redhat-operator-index:v4.6 docker://quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
+           sudo docker run --rm registry.redhat.io/rhel8/skopeo:8.4-7 \
+             skopeo copy \
+             --src-creds ${{ secrets.REGISTRY_REDHAT_USERNAME }}:${{ secrets.REGISTRY_REDHAT_PASSWORD }} \
+             --dest-creds danielmenezesbr:${{ secrets.REGISTRY_QUAY_PASSWORD }} \
+             docker://registry.redhat.io/redhat/redhat-operator-index:v4.6 \
+             docker://quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
            docker pull quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
            echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
       - name: test
