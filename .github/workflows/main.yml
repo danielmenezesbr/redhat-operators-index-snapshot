@@ -10,42 +10,59 @@ jobs:
   my-job:
     runs-on: ubuntu-latest
     steps:
-      - name: Download OC
-        run: curl -L -o openshift-client-linux.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.18/openshift-client-linux.tar.gz
-      - name: tar.gz
-        run: tar -vzxf openshift-client-linux.tar.gz
-      - name: Docker Login registry.redhat.io
-        run: echo ${{ secrets.REGISTRY_REDHAT_PASSWORD }} | docker login registry.redhat.io -u ${{ secrets.REGISTRY_REDHAT_USERNAME }} --password-stdin
-      - name: Docker Login quay.io
-        run: echo ${{ secrets.REGISTRY_QUAY_PASSWORD }} | docker login quay.io -u danielmenezesbr --password-stdin
-      - name: Build Image
-        run: |
-          set -exuo pipefail
-          export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()))')
-          echo $TAG_NAME
-          nohup ./oc adm catalog build --appregistry-org redhat-operators \
-            --from=registry.redhat.io/openshift4/ose-operator-registry:latest \
-            --to=quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6 \
-            --filter-by-os="linux/amd64" --insecure
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          pwd
-          ls -la
-      - uses: actions/upload-artifact@v2
-        with:
-          name: catalog
-          path: ~/nohup.out
-      - name: Test Image
-        run: |
-          set -exuo pipefail
-          export TAG_NAME=${{ env.TAG_NAME }}
-          docker pull quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6
-          docker run -p 50051:50051 quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6 &
-          sleep 10
-          export ID=$(docker ps | grep 'quay' | awk '{ print $1 }')
-          echo "ID: $ID"
-          export IP=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $ID)
-          echo "CATALOG IP: $IP"
-          docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"servicemeshoperator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName          
-          docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"jaeger-product","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
-          docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"kiali-ossm","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
-          #docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"elasticsearch-operator","channelName":"4.6"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
+       - name: skopeo copy
+         run: |
+           set -exuo pipefail
+           export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()))')
+           echo $TAG_NAME
+           skopeo copy --src-creds ${{ secrets.REGISTRY_REDHAT_USERNAME }}:${{ secrets.REGISTRY_REDHAT_PASSWORD }} --dest-creds danielmenezesbr:${{ secrets.REGISTRY_QUAY_PASSWORD }} docker://registry.redhat.io/redhat/redhat-operator-index:v4.6 docker://quay.io/repository/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
+           docker pull quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME-snapshot-OCPv4.6
+           docker run -p 50051:50051 quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME-snapshot-OCPv4.6 &
+           sleep 10
+           export ID=$(docker ps | grep 'quay' | awk '{ print $1 }')
+           echo "ID: $ID"
+           export IP=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $ID)
+           echo "CATALOG IP: $IP"
+           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"servicemeshoperator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName          
+           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"jaeger-product","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
+           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"kiali-ossm","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
+           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"elasticsearch-operator","channelName":"4.6"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
+#      - name: Download OC
+#        run: curl -L -o openshift-client-linux.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.18/openshift-client-linux.tar.gz
+#      - name: tar.gz
+#        run: tar -vzxf openshift-client-linux.tar.gz
+#      - name: Docker Login registry.redhat.io
+#        run: echo ${{ secrets.REGISTRY_REDHAT_PASSWORD }} | docker login registry.redhat.io -u ${{ secrets.REGISTRY_REDHAT_USERNAME }} --password-stdin
+#      - name: Docker Login quay.io
+#        run: echo ${{ secrets.REGISTRY_QUAY_PASSWORD }} | docker login quay.io -u danielmenezesbr --password-stdin
+#      - name: Build Image
+#        run: |
+#          set -exuo pipefail
+#          export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()))')
+#          echo $TAG_NAME
+#          nohup ./oc adm catalog build --appregistry-org redhat-operators \
+#            --from=registry.redhat.io/openshift4/ose-operator-registry:latest \
+#            --to=quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6 \
+#            --filter-by-os="linux/amd64" --insecure
+#          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+#          pwd
+#          ls -la
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          name: catalog
+#          path: ~/nohup.out
+#      - name: Test Image
+#        run: |
+#          set -exuo pipefail
+#          export TAG_NAME=${{ env.TAG_NAME }}
+#          docker pull quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6
+#          docker run -p 50051:50051 quay.io/danielmenezesbr/redhat-operators-snapshot:$TAG_NAME-snapshot-OCPv4.6 &
+#          sleep 10
+#          export ID=$(docker ps | grep 'quay' | awk '{ print $1 }')
+#          echo "ID: $ID"
+#          export IP=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $ID)
+#          echo "CATALOG IP: $IP"
+#          docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"servicemeshoperator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName          
+#          docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"jaeger-product","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
+#          docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"kiali-ossm","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
+#          #docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"elasticsearch-operator","channelName":"4.6"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
