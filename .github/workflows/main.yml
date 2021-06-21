@@ -21,7 +21,7 @@ jobs:
            echo $TAG_NAME
            skopeo copy --src-creds ${{ secrets.REGISTRY_REDHAT_USERNAME }}:${{ secrets.REGISTRY_REDHAT_PASSWORD }} --dest-creds danielmenezesbr:${{ secrets.REGISTRY_QUAY_PASSWORD }} docker://registry.redhat.io/redhat/redhat-operator-index:v4.6 docker://quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
            docker pull quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
-           docker run -p 50051:50051 quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
+           docker run -p 50051:50051 quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME &
            sleep 10
            export ID=$(docker ps | grep 'quay' | awk '{ print $1 }')
            echo "ID: $ID"
