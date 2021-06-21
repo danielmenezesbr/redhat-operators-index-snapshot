@@ -21,13 +21,18 @@ jobs:
            echo $TAG_NAME
            skopeo copy --src-creds ${{ secrets.REGISTRY_REDHAT_USERNAME }}:${{ secrets.REGISTRY_REDHAT_PASSWORD }} --dest-creds danielmenezesbr:${{ secrets.REGISTRY_QUAY_PASSWORD }} docker://registry.redhat.io/redhat/redhat-operator-index:v4.6 docker://quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
            docker pull quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME
+           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+      - name: test
+        run: |
+           set -exuo pipefail
+           export TAG_NAME=${{ env.TAG_NAME }}
            docker run -p 50051:50051 quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME &
            sleep 10
            export ID=$(docker ps | grep 'quay' | awk '{ print $1 }')
            echo "ID: $ID"
            export IP=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $ID)
            echo "CATALOG IP: $IP"
-           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"servicemeshoperator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName          
+           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"servicemeshoperator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
            docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"jaeger-product","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
            docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"kiali-ossm","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
            docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"elasticsearch-operator","channelName":"4.6"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
