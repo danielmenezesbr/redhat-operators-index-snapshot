@@ -17,7 +17,7 @@ jobs:
       - name: skopeo copy
         run: |
            set -exuo pipefail
-           export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()) + "-snapshot-OCPv4.6")')
+           export TAG_NAME=$(python3 -c 'import uuid; from datetime import datetime; print(datetime.now().strftime("%Y-%m-%d") + "_" + str(uuid.uuid4()) + "-BUILD-${{ github.run_id }}" + "-snapshot-OCPv4.6")')
            echo $TAG_NAME
            skopeo copy \
              --src-creds ${{ secrets.REGISTRY_REDHAT_USERNAME }}:${{ secrets.REGISTRY_REDHAT_PASSWORD }} \
