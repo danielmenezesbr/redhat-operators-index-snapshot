@@ -32,14 +32,16 @@ jobs:
            export TAG_NAME=${{ env.TAG_NAME }}
            docker run -p 50051:50051 quay.io/danielmenezesbr/redhat-operators-index-snapshot:$TAG_NAME &
            sleep 10
-           export ID=$(docker ps | grep 'quay' | awk '{ print $1 }')
+           export ID=$(sudo docker ps | grep 'quay' | awk '{ print $1 }')
            echo "ID: $ID"
            export IP=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $ID)
            echo "CATALOG IP: $IP"
-           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"servicemeshoperator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
-           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"jaeger-product","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
-           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"kiali-ossm","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
-           docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"elasticsearch-operator","channelName":"4.6"}' $IP:50051 api.Registry/GetBundleForChannel | grep csvName
+           export servicemeshoperator=$(docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"servicemeshoperator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
+           export jaeger-product=$(docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"jaeger-product","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
+           export kiali-ossm=$(docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"kiali-ossm","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
+           export elasticsearch-operator=$(docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"elasticsearch-operator","channelName":"4.6"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
+           export TAG_NAME_SERVICE_MESH=$servicemeshoperator_$jaeger-product_$kiali-ossm_$elasticsearch-operator_$elasticsearch-operator
+           echo $TAG_NAME_SERVICE_MESH
 #      - name: Download OC
 #        run: curl -L -o openshift-client-linux.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.18/openshift-client-linux.tar.gz
 #      - name: tar.gz
