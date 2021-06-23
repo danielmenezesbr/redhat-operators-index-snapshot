@@ -7,7 +7,7 @@ on:
     branches: [ main ]
     
 jobs:
-  my-job:
+  snapshot:
     runs-on: ubuntu-latest
     steps:
       - name: Docker Login registry.redhat.io
@@ -36,10 +36,10 @@ jobs:
            echo "ID: $ID"
            export IP=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $ID)
            echo "CATALOG IP: $IP"
-           export servicemeshoperator=$(docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"servicemeshoperator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
-           export jaegerproduct=$(docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"jaeger-product","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
-           export kialiossm=$(docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"kiali-ossm","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
-           export elasticsearchoperator=$(docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"elasticsearch-operator","channelName":"4.6"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
+           export servicemeshoperator=$(sudo docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"servicemeshoperator","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
+           export jaegerproduct=$(sudo docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"jaeger-product","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
+           export kialiossm=$(sudo docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"kiali-ossm","channelName":"stable"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
+           export elasticsearchoperator=$(sudo docker run fullstorydev/grpcurl -plaintext -d '{"pkgName":"elasticsearch-operator","channelName":"4.6"}' $IP:50051 api.Registry/GetBundleForChannel | jq -r .csvName)
            export TAG_NAME_SERVICE_MESH=${servicemeshoperator}_${jaegerproduct}_${kialiossm}_${elasticsearchoperator}
            echo $TAG_NAME_SERVICE_MESH
            skopeo copy \
