@@ -10,6 +10,8 @@ jobs:
   snapshot:
     runs-on: ubuntu-latest
     steps:
+      - name: Keepalive Workflow
+        uses: gautamkrishnar/keepalive-workflow@1.0.7
       - name: Docker Login registry.redhat.io
         run: echo ${{ secrets.REGISTRY_REDHAT_PASSWORD }} | docker login registry.redhat.io -u ${{ secrets.REGISTRY_REDHAT_USERNAME }} --password-stdin
       - name: Docker Login quay.io
